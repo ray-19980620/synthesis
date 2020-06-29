@@ -15,13 +15,14 @@ cc.Class({
             var node = cc.instantiate(_this.baseBlock);
             node.parent = scene;
 
-            let x = Math.floor(Math.random() * 500);
-            let y = Math.floor(Math.random() * 500);
+            let windowSize=cc.view.getVisibleSize();
+            let x = _this.randomNum(0 + node.width / 2, windowSize.width - node.width / 2);
+            let y = _this.randomNum(0 + node.height / 2, windowSize.height - node.height / 2);
             
             node.uid = _this.guid();
 
             node.setPosition(x, y);
-            console.log(x, y);
+
             _this.bindTouchMove(node);
             _this.bindTouchEnd(node);
             //让方块瞎几把走
@@ -35,35 +36,6 @@ cc.Class({
 
         window.isCollision = false;
         window.other = 0;
-
-        // this.yellow.on(cc.Node.EventType.TOUCH_MOVE, function (event) {
-        //     this.pauseAllActions();
-        //     let delta = event.touch.getDelta();
-        //     this.x += delta.x;
-        //     this.y += delta.y;
-        // }, this.yellow);
-        // this.red.on(cc.Node.EventType.TOUCH_MOVE, function(event) {
-        //     this.pauseAllActions();
-        //     let delta = event.touch.getDelta();
-        //     this.x += delta.x;
-        //     this.y += delta.y;
-        // }, this.red);
-
-        // this.red.on(cc.Node.EventType.TOUCH_END, function (event) {
-        //     console.log('松手了')
-        //     console.log(window.isCollision);
-        //     if (window.isCollision) {
-        //         cc.log('我要合成了');
-        //         _this.red.active = false;
-        //         _this.boom(_this.yellow.position);
-        //         _this.yellow.color = new cc.Color(134, 255, 134, 255);
-        //     } else {
-        //         this.resumeAllActions();
-        //     }
-        // }, this.red);
-
-        // this.goWalk(this.red);
-        // this.goWalk(this.yellow);
 
     },
 
@@ -86,8 +58,7 @@ cc.Class({
             console.log('松手了')
             if (window.isCollision) {
                 cc.log('我要合成了');
-                node.active = false;
-                window.other.active = false;
+                node.destroy();
                 _this.boom(window.collisionOther.position);
                 //cc.log(window.collisionOther.position, window.collisionOther.convertToNodeSpaceAR(cc.v2(0, 0)),window.collisionOther.convertToWorldSpaceAR(cc.v2(0, 0)))
                 window.isCollision = false;
@@ -101,33 +72,51 @@ cc.Class({
 
 
         nowPos = node.getPosition();
-        //cc.log(nowPos)
+        cc.log(nowPos)
 
         let windowSize=cc.view.getVisibleSize();
         
-        let x = this.randomNum(0, windowSize.width);
-        let y = this.randomNum(0, windowSize.height);
+        let x = y = 0;
+
+        let offsetX = this.randomNum(0, windowSize.width / 3);
+        let offsetY = this.randomNum(0, windowSize.height / 3);
+        
+        if (offsetX % 2 == 0) {
+            if (nowPos.x + offsetX <= windowSize.width - node.width / 2) {
+                x = nowPos.x + offsetX;
+            } else {
+                x = nowPos.x - offsetX;
+            }
+        } else {
+            if (nowPos.x - offsetX >= node.width / 2) {
+                x = nowPos.x - offsetX;
+            } else {
+                x = nowPos.x + offsetX;
+            }
+        }
+
+        if (offsetY % 2 == 0) {
+            if (nowPos.y + offsetY <= windowSize.height - node.height / 2) {
+                y = nowPos.y + offsetY;
+            } else {
+                y = nowPos.y - offsetY;
+            } 
+        } else {
+            if (nowPos.y - offsetY >= node.height / 2) {
+                y = nowPos.y - offsetY;
+            } else {
+                y = nowPos.y + offsetY;
+            }
+        }
+
+        
         cc.log(x, y);
-        if (nowPos.x + x + node.width / 2 > windowSize.width) {
-            x = windowSize.width - (nowPos.x - node.width / 2);
-        }
-        if (nowPos.x - x - node.width / 2 < node.width / 2) {
-            x = nowPos.x - node.width / 2;
-        }
-
-        if (nowPos.y + y + node.height / 2  > windowSize.height) {
-            y = windowSize.height - (nowPos.y - node.height / 2);
-        }
-        if (nowPos.y - y - node.height / 2  < node.height / 2) {
-            y = nowPos.y - node.height / 2;
-        }
-
         //cc.log('屏幕宽高' + windowSize.width + '*' + windowSize.height + '  现在位置' + nowPos.x + '|' + nowPos.y);
         
         let finished = cc.callFunc(function(target, nextNode) {
             this.goWalk(nextNode)
         }, this, node);
-        let moveAction = cc.sequence(cc.moveBy(5, x, y), finished);
+        let moveAction = cc.sequence(cc.moveTo(3, x, y), finished);
         node.runAction(moveAction);
     },
 
