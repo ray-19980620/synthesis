@@ -4,15 +4,27 @@ cc.Class({
     properties: {
         boomParticle: cc.Node,
         buy: cc.Node,
-        baseBlock: cc.Prefab,
-        particle_test: cc.Prefab
+        particle_test: cc.Prefab,
+        trash: cc.Node,
+        face1: cc.Prefab,
+        face2: cc.Prefab,
+        face3: cc.Prefab,
+        face4: cc.Prefab,
+        face5: cc.Prefab,
+        face6: cc.Prefab,
+        face7: cc.Prefab,
+        face8: cc.Prefab,
+        face9: cc.Prefab,
+        face10: cc.Prefab
     },
 
     onLoad () {
         var _this = this;
         this.buy.on(cc.Node.EventType.MOUSE_DOWN, function(event) {
             var scene = cc.director.getScene();
-            var node = cc.instantiate(_this.baseBlock);
+            var nodeTexture = _this.getTexture();
+            var node = cc.instantiate(nodeTexture.node);
+            node.group = nodeTexture.group;
             node.parent = scene;
 
             let windowSize=cc.view.getVisibleSize();
@@ -20,6 +32,7 @@ cc.Class({
             let y = _this.randomNum(0 + node.height / 2, windowSize.height - node.height / 2);
             
             node.uid = _this.guid();
+            node.level = 1;
 
             node.setPosition(x, y);
 
@@ -32,11 +45,52 @@ cc.Class({
         var manager = cc.director.getCollisionManager();
         manager.enabled = true;
         manager.enabledDebugDraw = true;
-        manager.enabledDrawBoundingBox = true;
+        //manager.enabledDrawBoundingBox = true;
 
         window.isCollision = false;
         window.other = 0;
 
+    },
+
+    /**
+     * 不穿参数返回1级资源
+     * 传参数返回该参数下一级资源
+     */
+    getTexture(level) {
+        var _this = this;
+        
+        switch (level) {
+            case undefined:
+                return {node: _this.face1, group: 'level1'};
+                break;
+            case 1:
+                return {node: _this.face2, group: 'level2'};
+                break;
+            case 2: 
+                return {node: _this.face3, group: 'level3'};
+                break;
+            case 3:
+                return {node: _this.face4, group: 'level4'};
+                break;
+            case 4:
+                return {node: _this.face5, group: 'level5'};
+                break;
+            case 5:
+                return {node: _this.face6, group: 'level6'};
+                break;
+            case 6:
+                return {node: _this.face7, group: 'level7'};
+                break;
+            case 7:
+                return {node: _this.face8, group: 'level8'};
+                break;
+            case 8:
+                return {node: _this.face9, group: 'level9'};
+                break;
+            case 9:
+                return {node: _this.face10, group: 'level10'};
+                break;
+        }
     },
 
     bindTouchMove(node) {
@@ -56,11 +110,29 @@ cc.Class({
 
         node.on(cc.Node.EventType.TOUCH_END, function (event) {
             console.log('松手了')
+            
+            if (event.target.x >= 960 - _this.trash.width && event.target.y <= _this.trash.height) {
+                node.destroy();
+            }
+
             if (window.isCollision) {
                 cc.log('我要合成了');
                 node.destroy();
+                window.collisionOther.destroy();
                 _this.boom(window.collisionOther.position);
-                //cc.log(window.collisionOther.position, window.collisionOther.convertToNodeSpaceAR(cc.v2(0, 0)),window.collisionOther.convertToWorldSpaceAR(cc.v2(0, 0)))
+                
+                var newNodeTexture = _this.getTexture(node.level);
+                var scene = cc.director.getScene();
+                var newNode = cc.instantiate(newNodeTexture.node);
+                newNode.group = newNodeTexture.group;
+                newNode.parent = scene;
+                newNode.uid = _this.guid();
+                newNode.level = node.level + 1;
+                newNode.setPosition(node.position.x, node.position.y);
+                _this.bindTouchMove(newNode);
+                _this.bindTouchEnd(newNode);
+                _this.goWalk(newNode);
+
                 window.isCollision = false;
             } else {
                 this.resumeAllActions();
@@ -70,9 +142,8 @@ cc.Class({
 
     goWalk(node) {
 
-
         nowPos = node.getPosition();
-        cc.log(nowPos)
+        //cc.log(nowPos)
 
         let windowSize=cc.view.getVisibleSize();
         
@@ -110,7 +181,7 @@ cc.Class({
         }
 
         
-        cc.log(x, y);
+        //cc.log(x, y);
         //cc.log('屏幕宽高' + windowSize.width + '*' + windowSize.height + '  现在位置' + nowPos.x + '|' + nowPos.y);
         
         let finished = cc.callFunc(function(target, nextNode) {
