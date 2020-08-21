@@ -2,10 +2,11 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
-        boomParticle: cc.Node,
-        buy: cc.Node,
-        particle_test: cc.Prefab,
-        trash: cc.Node,
+        buy: cc.Node,   //购买按钮
+        boomParticle: cc.Prefab,    //爆炸粒子
+        shop_button: cc.Node,   //商城文字按钮
+        shop_bg: cc.Node,   //商城背景
+        trash: cc.Node, //垃圾桶节点
         face1: cc.Prefab,
         face2: cc.Prefab,
         face3: cc.Prefab,
@@ -20,6 +21,7 @@ cc.Class({
 
     onLoad () {
         var _this = this;
+        //点击购买按钮触发
         this.buy.on(cc.Node.EventType.MOUSE_DOWN, function(event) {
             var scene = cc.director.getScene();
             var nodeTexture = _this.getTexture();
@@ -27,6 +29,7 @@ cc.Class({
             node.group = nodeTexture.group;
             node.parent = scene;
 
+            //计算随机出现的位置
             let windowSize=cc.view.getVisibleSize();
             let x = _this.randomNum(0 + node.width / 2, windowSize.width - node.width / 2);
             let y = _this.randomNum(0 + node.height / 2, windowSize.height - node.height / 2);
@@ -42,10 +45,16 @@ cc.Class({
             _this.goWalk(node);
         });
 
+        //点击商城按钮
+        this.shop_button.on(cc.Node.EventType.MOUSE_DOWN, function(event) {
+            
+        });
+
+        //初始化碰撞系统
         var manager = cc.director.getCollisionManager();
         manager.enabled = true;
         manager.enabledDebugDraw = true;
-        //manager.enabledDrawBoundingBox = true;
+        //manager.enabledDrawBoundingBox = true;    //是否显示碰撞边框线
 
         window.isCollision = false;
         window.other = 0;
@@ -53,7 +62,8 @@ cc.Class({
     },
 
     /**
-     * 不穿参数返回1级资源
+     * 动态获得prefab节点
+     * 不传参数返回1级资源
      * 传参数返回该参数下一级资源
      */
     getTexture(level) {
@@ -93,6 +103,11 @@ cc.Class({
         }
     },
 
+    /**
+     * @description: 给节点绑定touch事件 touch时节点跟随鼠标移动
+     * @param node 节点 
+     * @return null 
+     */
     bindTouchMove(node) {
         node.on(cc.Node.EventType.TOUCH_MOVE, function (event) {
             window.droping = node.uid;
@@ -103,6 +118,11 @@ cc.Class({
         }, node);
     },
 
+    /**
+     * @description: touch松手事件 同级节点碰撞出发升级/继续暂停的移动动作 1手上的节点销毁 2目标节点销毁 3展示粒子效果 4新建更高级节点并使用原手上节点坐标位置
+     * @param {type} 
+     * @return {type} 
+     */
     bindTouchEnd(node) {
         var _this = this;
         
@@ -111,6 +131,7 @@ cc.Class({
         node.on(cc.Node.EventType.TOUCH_END, function (event) {
             console.log('松手了')
             
+            //是否停留在垃圾桶上
             if (event.target.x >= 960 - _this.trash.width && event.target.y <= _this.trash.height) {
                 node.destroy();
             }
@@ -140,6 +161,11 @@ cc.Class({
         }, node);
     },
 
+    /**
+     * @description: 递归调用移动动作
+     * @param node 
+     * @return null 
+     */
     goWalk(node) {
 
         nowPos = node.getPosition();
@@ -195,17 +221,27 @@ cc.Class({
 
     },
 
+    /**
+     * @description: 粒子效果爆炸到指定坐标
+     * @param pos 位置
+     */
     boom(pos) {
         var scene = cc.director.getScene();
-        var particle_test = cc.instantiate(this.particle_test);
-        particle_test.parent = scene;
+        var boomParticle = cc.instantiate(this.boomParticle);
+        boomParticle.parent = scene;
 
-        let particle = particle_test.getComponent(cc.ParticleSystem);
-        particle_test.setPosition(pos.x, pos.y);
+        let particle = boomParticle.getComponent(cc.ParticleSystem);
+        boomParticle.setPosition(pos.x, pos.y);
         particle.resetSystem();
     },
 
 
+    /**
+     * @description: 随机数
+     * @param {min} 最小值
+     * @param {max} 最大值
+     * @return {num} 随机数
+     */
     randomNum(Min,Max){
         let Range = Max - Min;
         let Rand = Math.random();  
@@ -213,6 +249,10 @@ cc.Class({
         return num;
     },
 
+    /**
+     * @description: 获得一个唯一的uuid
+     * @return {string} uuid 
+     */
     guid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
